@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -44,8 +43,8 @@
             <button type="submit" class="btn btn-primary">Search</button>
         </form>
         <div class="mt-4">
-            <h2>Forecast</h2>
-            <table class="table mt-3" id="forecast-table">
+            <h2>Daily Forecast</h2>
+            <table class="table mt-3" id="daily-forecast-table">
                 <thead>
                     <tr>
                         <th scope="col">Date</th>
@@ -58,13 +57,27 @@
             </table>
         </div>
         <div class="mt-4">
+            <h2>Hourly Forecast</h2>
+            <table class="table mt-3" id="hourly-forecast-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Time</th>
+                        <th scope="col">Temperature</th>
+                        <th scope="col">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4">
             <h2>Units</h2>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="units" id="fahrenheit" value="imperial" checked>
+                <input class="form-check-input" type="radio" name="units" id="fahrenheit" value="imperial">
                 <label class="form-check-label" for="fahrenheit">Fahrenheit</label>
             </div>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="units" id="celsius" value="metric">
+                <input class="form-check-input" type="radio" name="units" id="celsius" value="metric" checked>
                 <label class="form-check-label" for="celsius">Celsius</label>
             </div>
         </div>

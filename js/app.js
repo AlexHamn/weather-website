@@ -1,12 +1,31 @@
-//app.js
+// app.js
+
 const API_KEY = "fe2e0987d3ede21679cdbf748d879be5";
 const weatherInfo = document.getElementById("weather-info");
 const cityInput = document.getElementById("city-input");
 const searchForm = document.getElementById("search-form");
-const forecastTable = document
-    .getElementById("forecast-table")
+const dailyForecastTable = document
+    .getElementById("daily-forecast-table")
+    .querySelector("tbody");
+const hourlyForecastTable = document
+    .getElementById("hourly-forecast-table")
     .querySelector("tbody");
 const unitRadios = document.querySelectorAll('input[name="units"]');
+
+// Fetch weather data from API
+function fetchWeatherData(city, units) {
+    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=${units}`;
+    fetch(apiUrl)
+        .then((response) => response.json())
+        .then((data) => {
+            displayWeatherData(data);
+            fetchForecastData(data.coord.lat, data.coord.lon, units);
+        })
+        .catch((error) => {
+            console.log("Error:", error);
+            alert("Failed to fetch weather data. Please try again.");
+        });
+}
 
 // Fetch weather data based on user's location
 function fetchWeatherByLocation(units) {
@@ -15,17 +34,7 @@ function fetchWeatherByLocation(units) {
             (position) => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
-                const apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=${units}`;
-                fetch(apiUrl)
-                    .then((response) => response.json())
-                    .then((data) => {
-                        displayWeatherData(data);
-                        fetchForecastData(lat, lon, units);
-                    })
-                    .catch((error) => {
-                        console.log("Error:", error);
-                        alert("Failed to fetch weather data. Please try again.");
-                    });
+                fetchWeatherDataByCoords(lat, lon, units);
             },
             (error) => {
                 console.log("Error:", error);
@@ -37,14 +46,14 @@ function fetchWeatherByLocation(units) {
     }
 }
 
-// Fetch weather data from API
-function fetchWeatherData(city, units) {
-    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=${units}`;
+// Fetch weather data by coordinates
+function fetchWeatherDataByCoords(lat, lon, units) {
+    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=${units}`;
     fetch(apiUrl)
         .then((response) => response.json())
         .then((data) => {
             displayWeatherData(data);
-            fetchForecastData(data.coord.lat, data.coord.lon, units);
+            fetchForecastData(lat, lon, units);
         })
         .catch((error) => {
             console.log("Error:", error);
@@ -72,7 +81,8 @@ function fetchForecastData(lat, lon, units) {
     fetch(apiUrl)
         .then((response) => response.json())
         .then((data) => {
-            displayForecastData(data);
+            displayDailyForecastData(data.list);
+            displayHourlyForecastData(data.list);
         })
         .catch((error) => {
             console.log("Error:", error);
@@ -80,39 +90,65 @@ function fetchForecastData(lat, lon, units) {
         });
 }
 
-// Display forecast data in table
-function displayForecastData(data) {
-    const forecastList = data.list;
-    const dailyForecasts = getDailyForecasts(forecastList);
+// Display daily forecast data
+function displayDailyForecastData(forecastList) {
+    const dailyForecast = getDailyForecast(forecastList);
 
-    forecastTable.innerHTML = "";
+    dailyForecastTable.innerHTML = "";
 
-    dailyForecasts.forEach((forecast) => {
+    dailyForecast.forEach((forecast) => {
         const row = document.createElement("tr");
         const dateCell = document.createElement("td");
         const tempCell = document.createElement("td");
         const descCell = document.createElement("td");
 
         const date = new Date(forecast.dt * 1000);
-        const temperatureMin = forecast.main.temp_min.toFixed(1);
-        const temperatureMax = forecast.main.temp_max.toFixed(1);
+        const temperature = forecast.main.temp.toFixed(1);
         const description = forecast.weather[0].description;
 
         dateCell.textContent = formatDate(date);
-        tempCell.textContent = `${temperatureMin} - ${temperatureMax} °${getUnitSymbol()}`;
+        tempCell.textContent = `${temperature} °${getUnitSymbol()}`;
         descCell.textContent = description;
 
         row.appendChild(dateCell);
         row.appendChild(tempCell);
         row.appendChild(descCell);
 
-        forecastTable.appendChild(row);
+        dailyForecastTable.appendChild(row);
     });
 }
 
-// Get daily forecasts from forecast list for the next 7 days
-function getDailyForecasts(forecastList) {
-    const dailyForecasts = [];
+// Display hourly forecast data
+function displayHourlyForecastData(forecastList) {
+    const hourlyForecast = getHourlyForecast(forecastList);
+
+    hourlyForecastTable.innerHTML = "";
+
+    hourlyForecast.forEach((forecast) => {
+        const row = document.createElement("tr");
+        const timeCell = document.createElement("td");
+        const tempCell = document.createElement("td");
+        const descCell = document.createElement("td");
+
+        const time = new Date(forecast.dt * 1000);
+        const temperature = forecast.main.temp.toFixed(1);
+        const description = forecast.weather[0].description;
+
+        timeCell.textContent = formatTime(time);
+        tempCell.textContent = `${temperature} °${getUnitSymbol()}`;
+        descCell.textContent = description;
+
+        row.appendChild(timeCell);
+        row.appendChild(tempCell);
+        row.appendChild(descCell);
+
+        hourlyForecastTable.appendChild(row);
+    });
+}
+
+// Get daily forecast data
+function getDailyForecast(forecastList) {
+    const dailyForecast = [];
     let currentDate = "";
 
     forecastList.forEach((forecast) => {
@@ -121,15 +157,29 @@ function getDailyForecasts(forecastList) {
 
         if (dateString !== currentDate) {
             currentDate = dateString;
-            dailyForecasts.push(forecast);
-
-            if (dailyForecasts.length === 7) {
-                return dailyForecasts;
-            }
+            dailyForecast.push(forecast);
         }
     });
 
-    return dailyForecasts;
+    return dailyForecast;
+}
+
+// Get hourly forecast data
+function getHourlyForecast(forecastList) {
+    const hourlyForecast = [];
+    let currentHour = "";
+
+    forecastList.forEach((forecast) => {
+        const date = new Date(forecast.dt * 1000);
+        const hour = date.getHours();
+
+        if (hour !== currentHour) {
+            currentHour = hour;
+            hourlyForecast.push(forecast);
+        }
+    });
+
+    return hourlyForecast;
 }
 
 // Format date as YYYY-MM-DD
@@ -138,6 +188,13 @@ function formatDate(date) {
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
+}
+
+// Format time as HH:mm
+function formatTime(date) {
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
 }
 
 // Get temperature unit symbol
@@ -162,50 +219,16 @@ unitRadios.forEach((radio) => {
     radio.addEventListener("change", () => {
         const city = document.getElementById("city").textContent;
         const units = radio.value;
-        fetchWeatherData(city, units);
+        if (city) {
+            fetchWeatherData(city, units);
+        } else {
+            fetchWeatherByLocation(units);
+        }
     });
 });
 
 // Fetch weather data for user's location on page load
 document.addEventListener("DOMContentLoaded", () => {
-    const units = getSelectedUnit();
+    const units = document.querySelector('input[name="units"]:checked').value;
     fetchWeatherByLocation(units);
 });
-// Autocomplete functionality
-$(function() {
-    $.getJSON("city.list.json", function(cityList) {
-        $("#city-input")
-            .autocomplete({
-                source: function(request, response) {
-                    if (request.term.length < 3) {
-                        return;
-                    }
-                    const matcher = new RegExp(
-                        $.ui.autocomplete.escapeRegex(request.term),
-                        "i"
-                    );
-                    response(
-                        $.grep(cityList, function(city) {
-                            return matcher.test(city.name);
-                        })
-                    );
-                },
-                select: function(event, ui) {
-                    $("#city-input").val(ui.item.name);
-                    fetchWeatherData(ui.item.name, getSelectedUnit());
-                    return false;
-                },
-            })
-            .autocomplete("instance")._renderItem = function(ul, item) {
-                return $("<li>")
-                    .append("<div>" + item.name + ", " + item.country + "</div>")
-                    .appendTo(ul);
-            };
-    });
-});
-
-// Helper function to get the selected unit
-function getSelectedUnit() {
-    const selectedUnit = document.querySelector('input[name="units"]:checked');
-    return selectedUnit ? selectedUnit.value : "metric";
-}
