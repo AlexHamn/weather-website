@@ -7,9 +7,9 @@ const searchForm = document.getElementById("search-form");
 const dailyForecastTable = document
     .getElementById("daily-forecast-table")
     .querySelector("tbody");
-const hourlyForecastTable = document
-    .getElementById("hourly-forecast-table")
-    .querySelector("tbody");
+const hourlyForecastContainer = document.getElementById(
+    "hourly-forecast-container"
+);
 const unitRadios = document.querySelectorAll('input[name="units"]');
 
 // Fetch weather data from API
@@ -122,27 +122,33 @@ function displayDailyForecastData(forecastList) {
 function displayHourlyForecastData(forecastList) {
     const hourlyForecast = getHourlyForecast(forecastList);
 
-    hourlyForecastTable.innerHTML = "";
+    hourlyForecastContainer.innerHTML = "";
 
     hourlyForecast.forEach((forecast) => {
-        const row = document.createElement("tr");
-        const timeCell = document.createElement("td");
-        const tempCell = document.createElement("td");
-        const descCell = document.createElement("td");
+        const col = document.createElement("div");
+        col.className = "forecast-card";
 
-        const time = new Date(forecast.dt * 1000);
+        const hourElement = document.createElement("div");
+        hourElement.className = "hour";
+        const hour = new Date(forecast.dt * 1000).getHours();
+        hourElement.textContent = `${hour}:00`;
+
+        const iconElement = document.createElement("img");
+        iconElement.className = "weather-icon";
+        const iconCode = forecast.weather[0].icon;
+        const iconUrl = `https://openweathermap.org/img/w/${iconCode}.png`;
+        iconElement.setAttribute("src", iconUrl);
+
+        const tempElement = document.createElement("div");
+        tempElement.className = "temperature";
         const temperature = forecast.main.temp.toFixed(1);
-        const description = forecast.weather[0].description;
+        tempElement.textContent = `${temperature} °${getUnitSymbol()}`;
 
-        timeCell.textContent = formatTime(time);
-        tempCell.textContent = `${temperature} °${getUnitSymbol()}`;
-        descCell.textContent = description;
+        col.appendChild(hourElement);
+        col.appendChild(iconElement);
+        col.appendChild(tempElement);
 
-        row.appendChild(timeCell);
-        row.appendChild(tempCell);
-        row.appendChild(descCell);
-
-        hourlyForecastTable.appendChild(row);
+        hourlyForecastContainer.appendChild(col);
     });
 }
 
@@ -188,13 +194,6 @@ function formatDate(date) {
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
-}
-
-// Format time as HH:mm
-function formatTime(date) {
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    return `${hours}:${minutes}`;
 }
 
 // Get temperature unit symbol

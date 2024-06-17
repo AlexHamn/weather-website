@@ -31,7 +31,7 @@
         <h1>Current Weather</h1>
         <div id="weather-info">
             <p><strong>City:</strong> <span id="city"></span></p>
-            <p><strong>Temperature:</strong> <span id="temp"></span> &deg;<span id="unit">F</span></p>
+            <p><strong>Temperature:</strong> <span id="temp"></span> &deg;<span id="unit">C</span></p>
             <img id="icon" src="" alt="Weather Icon">
             <p id="description"></p>
         </div>
@@ -58,17 +58,7 @@
         </div>
         <div class="mt-4">
             <h2>Hourly Forecast</h2>
-            <table class="table mt-3" id="hourly-forecast-table">
-                <thead>
-                    <tr>
-                        <th scope="col">Time</th>
-                        <th scope="col">Temperature</th>
-                        <th scope="col">Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
+            <div class="row" id="hourly-forecast-container"></div>
         </div>
         <div class="mt-4">
             <h2>Units</h2>
