@@ -1,0 +1,77 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Website</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Weather Website</a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item active">
+                    <a class="nav-link" href="index.html">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="about.html">About Us</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="contact.html">Contact</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container mt-5">
+        <h1>Current Weather</h1>
+        <div id="weather-info">
+            <p><strong>City:</strong> <span id="city"></span></p>
+            <p><strong>Temperature:</strong> <span id="temp"></span> &deg;<span id="unit">F</span></p>
+            <img id="icon" src="" alt="Weather Icon">
+            <p id="description"></p>
+        </div>
+        <form id="search-form">
+            <div class="form-group">
+                <label for="city-input">Enter City Name:</label>
+                <input type="text" class="form-control" id="city-input" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+        <div class="mt-4">
+            <h2>Forecast</h2>
+            <table class="table mt-3" id="forecast-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Temperature</th>
+                        <th scope="col">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4">
+            <h2>Units</h2>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="units" id="fahrenheit" value="imperial" checked>
+                <label class="form-check-label" for="fahrenheit">Fahrenheit</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="units" id="celsius" value="metric">
+                <label class="form-check-label" for="celsius">Celsius</label>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
