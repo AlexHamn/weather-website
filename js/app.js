@@ -95,18 +95,19 @@ function getFeelsLikeDescription(actualTemp, feelsLikeTemp) {
 
 // Fetch forecast data from API
 function fetchForecastData(lat, lon, units) {
-    const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=${units}`;
-    fetch(apiUrl)
-        .then((response) => response.json())
-        .then((data) => {
-            displayDailyForecastData(data.list);
-            displayHourlyForecastData(data.list);
-        })
-        .catch((error) => {
-            console.log("Error:", error);
-            alert("Failed to fetch forecast data. Please try again.");
-        });
+  const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=${units}`;
+  fetch(apiUrl)
+    .then((response) => response.json())
+    .then((data) => {
+      displayDailyForecastData(data.list);
+      displayHourlyForecastData(data.list, data.city.sunrise, data.city.sunset);
+    })
+    .catch((error) => {
+      console.log("Error:", error);
+      alert("Failed to fetch forecast data. Please try again.");
+    });
 }
+
 
 // Function to format date as three-letter weekday abbreviation or "Today" if it is the current date
 function formatWeekday(date) {
@@ -200,38 +201,65 @@ function displayDailyForecastData(forecastList) {
 }
 
 // Display hourly forecast data
-function displayHourlyForecastData(forecastList) {
-    const hourlyForecast = getHourlyForecast(forecastList);
+function displayHourlyForecastData(forecastList, sunrise, sunset) {
+  const hourlyForecast = getHourlyForecast(forecastList, sunrise, sunset);
+  hourlyForecastContainer.innerHTML = "";
 
-    hourlyForecastContainer.innerHTML = "";
+  hourlyForecast.forEach((item, index) => {
+    const col = document.createElement("div");
+    col.className = "forecast-card";
 
-    hourlyForecast.forEach((forecast) => {
-        const col = document.createElement("div");
-        col.className = "forecast-card";
+    const timeElement = document.createElement("div");
+    timeElement.className = "hour";
 
-        const hourElement = document.createElement("div");
-        hourElement.className = "hour";
-        const hour = new Date(forecast.dt * 1000).getHours();
-        hourElement.textContent = `${hour}:00`;
+    if (item.type === "forecast") {
+      // Display "Now" for the first item, otherwise show the hour
+      if (index === 0) {
+        timeElement.textContent = "Now";
+      } else {
+        const hour = new Date(item.dt * 1000).getHours();
+        timeElement.textContent = `${hour.toString().padStart(2, "0")}:00`;
+      }
 
-        const iconElement = document.createElement("img");
-        iconElement.className = "weather-icon";
-        const iconCode = forecast.weather[0].icon;
-        const iconUrl = `https://openweathermap.org/img/wn/${iconCode}.png`;
-        iconElement.setAttribute("src", iconUrl);
+      const iconElement = document.createElement("img");
+      iconElement.className = "weather-icon";
+      const iconCode = item.weather[0].icon;
+      const iconUrl = `https://openweathermap.org/img/wn/${iconCode}.png`;
+      iconElement.setAttribute("src", iconUrl);
 
-        const tempElement = document.createElement("div");
-        tempElement.className = "temperature";
-        const temperature = forecast.main.temp.toFixed(1);
-        tempElement.textContent = `${temperature}°`;
+      const tempElement = document.createElement("div");
+      tempElement.className = "temperature";
+      const temperature = item.main.temp.toFixed(1);
+      tempElement.textContent = `${temperature}°`;
 
-        col.appendChild(hourElement);
-        col.appendChild(iconElement);
-        col.appendChild(tempElement);
+      col.appendChild(timeElement);
+      col.appendChild(iconElement);
+      col.appendChild(tempElement);
+    } else if (item.type === "sunrise" || item.type === "sunset") {
+      const time = new Date(item.time * 1000);
+      timeElement.textContent = `${time
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
 
-        hourlyForecastContainer.appendChild(col);
-    });
+      const iconElement = document.createElement("div");
+      iconElement.className = "sun-icon";
+      iconElement.textContent = item.type === "sunrise" ? "🌅" : "🌇";
+
+      const labelElement = document.createElement("div");
+      labelElement.className = "sun-label";
+      labelElement.textContent = item.type === "sunrise" ? "Sunrise" : "Sunset";
+
+      col.appendChild(timeElement);
+      col.appendChild(iconElement);
+      col.appendChild(labelElement);
+      col.classList.add(item.type);
+    }
+
+    hourlyForecastContainer.appendChild(col);
+  });
 }
+
 
 // Get daily forecast data
 function getDailyForecast(forecastList) {
@@ -256,22 +284,71 @@ function getDailyForecast(forecastList) {
 }
 
 // Get hourly forecast data
-function getHourlyForecast(forecastList) {
-    const hourlyForecast = [];
-    let currentHour = "";
+function getHourlyForecast(forecastList, sunrise, sunset) {
+  const hourlyForecast = [];
+  const now = new Date();
+  now.setMinutes(0, 0, 0); // Set minutes and seconds to 0
+  const twentyFourHoursLater = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-    forecastList.forEach((forecast) => {
-        const date = new Date(forecast.dt * 1000);
-        const hour = date.getHours();
+  // Add the current weather as the first item
+  if (forecastList.length > 0) {
+    hourlyForecast.push({ type: "forecast", ...forecastList[0] });
+  }
 
-        if (hour !== currentHour) {
-            currentHour = hour;
-            hourlyForecast.push(forecast);
-        }
-    });
+  // Calculate sunrise and sunset times for today and tomorrow
+  const todaySunrise = new Date(sunrise * 1000);
+  const todaySunset = new Date(sunset * 1000);
+  const tomorrowSunrise = new Date(
+    todaySunrise.getTime() + 24 * 60 * 60 * 1000
+  );
+  const tomorrowSunset = new Date(todaySunset.getTime() + 24 * 60 * 60 * 1000);
 
-    return hourlyForecast;
+  // Create an array of sun events within the next 24 hours
+  const sunEvents = [
+    { type: "sunrise", time: todaySunrise },
+    { type: "sunset", time: todaySunset },
+    { type: "sunrise", time: tomorrowSunrise },
+    { type: "sunset", time: tomorrowSunset },
+  ].filter((event) => event.time > now && event.time <= twentyFourHoursLater);
+
+  // Filter and add forecasts for the next 23 hours, including sunrise and sunset
+  forecastList.forEach((forecast) => {
+    const forecastDate = new Date(forecast.dt * 1000);
+    if (
+      forecastDate > now &&
+      forecastDate <= twentyFourHoursLater &&
+      forecastDate.getMinutes() === 0
+    ) {
+      // Add any sun events that occur before this forecast
+      while (sunEvents.length > 0 && sunEvents[0].time < forecastDate) {
+        hourlyForecast.push({
+          type: sunEvents[0].type,
+          time: sunEvents[0].time.getTime() / 1000,
+        });
+        sunEvents.shift();
+      }
+      hourlyForecast.push({ type: "forecast", ...forecast });
+    }
+  });
+
+  // Add any remaining sun events
+  hourlyForecast.push(
+    ...sunEvents.map((event) => ({
+      type: event.type,
+      time: event.time.getTime() / 1000,
+    }))
+  );
+
+  // Sort the forecast to ensure sunrise and sunset are in the correct position
+  hourlyForecast.sort((a, b) => {
+    const timeA = a.type === "forecast" ? a.dt : a.time;
+    const timeB = b.type === "forecast" ? b.dt : b.time;
+    return timeA - timeB;
+  });
+
+  return hourlyForecast;
 }
+
 
 // Format date as YYYY-MM-DD
 function formatDate(date) {
