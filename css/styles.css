@@ -9,7 +9,6 @@ body {
     max-width: 95%;
     margin: 0 auto;
     padding: 20px;
-    background-color: #fff;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     border-radius: 5px;
 }
@@ -61,11 +60,6 @@ h2 {
     padding: 10px;
     text-align: left;
     border-bottom: 1px solid #ddd;
-}
-
-#forecast-table th {
-    background-color: #f5f5f5;
-    font-weight: bold;
 }
 
 .form-check-inline {
@@ -142,7 +136,7 @@ h2 {
 .temp-range-bar {
     position: relative;
     height: 20px;
-    background-color: #f0f0f0;
+    background-color: #dedede;
     border-radius: 5px;
     margin: 5px auto;
     overflow: hidden;
