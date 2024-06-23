@@ -2,29 +2,31 @@
 
 const API_KEY = "fe2e0987d3ede21679cdbf748d879be5";
 const weatherInfo = document.getElementById("weather-info");
-const cityInput = document.getElementById("city-input");
-const searchForm = document.getElementById("search-form");
+const searchInput = document.querySelector(".form-inline .form-control");
+const searchForm = document.querySelector(".form-inline");
 const dailyForecastTable = document
-    .getElementById("daily-forecast-table")
-    .querySelector("tbody");
+  .getElementById("daily-forecast-table")
+  .querySelector("tbody");
 const hourlyForecastContainer = document.getElementById(
-    "hourly-forecast-container"
+  "hourly-forecast-container"
 );
 const unitRadios = document.querySelectorAll('input[name="units"]');
 
+
 // Fetch weather data from API
 function fetchWeatherData(city, units) {
-    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=${units}`;
-    fetch(apiUrl)
-        .then((response) => response.json())
-        .then((data) => {
-            displayWeatherData(data);
-            fetchForecastData(data.coord.lat, data.coord.lon, units);
-        })
-        .catch((error) => {
-            console.log("Error:", error);
-            alert("Failed to fetch weather data. Please try again.");
-        });
+  const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=${units}`;
+  fetch(apiUrl)
+    .then((response) => response.json())
+    .then((data) => {
+      displayWeatherData(data);
+      fetchForecastData(data.coord.lat, data.coord.lon, units);
+      fetchAirQualityData(data.coord.lat, data.coord.lon); // Add this line
+    })
+    .catch((error) => {
+      console.log("Error:", error);
+      alert("Failed to fetch weather data. Please try again.");
+    });
 }
 
 // Fetch weather data based on user's location
@@ -48,31 +50,47 @@ function fetchWeatherByLocation(units) {
 
 // Fetch weather data by coordinates
 function fetchWeatherDataByCoords(lat, lon, units) {
-    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=${units}`;
-    fetch(apiUrl)
-        .then((response) => response.json())
-        .then((data) => {
-            displayWeatherData(data);
-            fetchForecastData(lat, lon, units);
-        })
-        .catch((error) => {
-            console.log("Error:", error);
-            alert("Failed to fetch weather data. Please try again.");
-        });
+  const apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=${units}`;
+  fetch(apiUrl)
+    .then((response) => response.json())
+    .then((data) => {
+      displayWeatherData(data);
+      fetchForecastData(lat, lon, units);
+      fetchAirQualityData(lat, lon); // Add this line
+    })
+    .catch((error) => {
+      console.log("Error:", error);
+      alert("Failed to fetch weather data. Please try again.");
+    });
 }
 
-// Display current weather data
 function displayWeatherData(data) {
     const cityName = data.name;
     const temperature = data.main.temp;
     const description = data.weather[0].description;
     const iconCode = data.weather[0].icon;
-    const iconUrl = `https://openweathermap.org/img/w/${iconCode}.png`;
+    const iconUrl = `https://openweathermap.org/img/wn/${iconCode}.png`;
+    const feelsLike = data.main.feels_like;
 
     document.getElementById("city").textContent = cityName;
-    document.getElementById("temp").textContent = temperature.toFixed(1);
+    document.getElementById("temp").textContent = temperature.toFixed(1)+"°";
     document.getElementById("description").textContent = description;
     document.getElementById("icon").setAttribute("src", iconUrl);
+
+    document.getElementById("feels-like-temp").textContent = `${feelsLike.toFixed(1)}°`;
+    document.getElementById("feels-like-description").textContent = getFeelsLikeDescription(temperature, feelsLike);
+}
+
+// Function to generate the "Feels Like" description
+function getFeelsLikeDescription(actualTemp, feelsLikeTemp) {
+    const diff = feelsLikeTemp - actualTemp;
+    if (diff > 3) {
+        return "Feels warmer than it is";
+    } else if (diff < -3) {
+        return "Feels colder than it is";
+    } else {
+        return "Feels about right";
+    }
 }
 
 // Fetch forecast data from API
@@ -90,32 +108,95 @@ function fetchForecastData(lat, lon, units) {
         });
 }
 
+// Function to format date as three-letter weekday abbreviation or "Today" if it is the current date
+function formatWeekday(date) {
+    const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const today = new Date();
+    
+    // Check if the given date is today
+    if (date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear()) {
+        return "Today";
+    }
+    
+    return daysOfWeek[date.getUTCDay()];
+}
+
 // Display daily forecast data
 function displayDailyForecastData(forecastList) {
-    const dailyForecast = getDailyForecast(forecastList);
+  const dailyForecast = {};
+  let weeklyMinTemp = Infinity;
+  let weeklyMaxTemp = -Infinity;
 
-    dailyForecastTable.innerHTML = "";
+  // Group forecast data by date and find weekly min/max temperatures
+  forecastList.forEach((forecast) => {
+    const date = new Date(forecast.dt * 1000);
+    const dateString = formatDate(date);
 
-    dailyForecast.forEach((forecast) => {
-        const row = document.createElement("tr");
-        const dateCell = document.createElement("td");
-        const tempCell = document.createElement("td");
-        const descCell = document.createElement("td");
+    if (!dailyForecast[dateString]) {
+      dailyForecast[dateString] = {
+        date: date,
+        temps: [],
+        icon: forecast.weather[0].icon,
+      };
+    }
 
-        const date = new Date(forecast.dt * 1000);
-        const temperature = forecast.main.temp.toFixed(1);
-        const description = forecast.weather[0].description;
+    const temperature = forecast.main.temp;
+    dailyForecast[dateString].temps.push(temperature);
+    weeklyMinTemp = Math.min(weeklyMinTemp, temperature);
+    weeklyMaxTemp = Math.max(weeklyMaxTemp, temperature);
+  });
 
-        dateCell.textContent = formatDate(date);
-        tempCell.textContent = `${temperature} °${getUnitSymbol()}`;
-        descCell.textContent = description;
+  // Clear the existing content in the daily forecast table
+  dailyForecastTable.innerHTML = "";
 
-        row.appendChild(dateCell);
-        row.appendChild(tempCell);
-        row.appendChild(descCell);
+  // Create table header
+  const headerRow = document.createElement("tr");
+  headerRow.innerHTML = `
+    <th>Date</th>
+    <th>Icon</th>
+    <th>Min</th>
+    <th class="d-none d-md-table-cell">Range</th>
+    <th>Max</th>
+  `;
+  dailyForecastTable.appendChild(headerRow);
 
-        dailyForecastTable.appendChild(row);
-    });
+  // Iterate over each date in the daily forecast
+  for (const dateString in dailyForecast) {
+    const forecast = dailyForecast[dateString];
+    const date = forecast.date;
+    const temps = forecast.temps;
+    const minTemp = Math.min(...temps);
+    const maxTemp = Math.max(...temps);
+    const AlticonCode = forecast.icon;
+    
+    // Modify the icon code
+    const iconCode = AlticonCode.slice(0, -1) + "d";
+
+    // Create a new table row element
+    const row = document.createElement("tr");
+
+    // Calculate positions for the temperature range bar
+    const dailyMinPosition = ((minTemp - weeklyMinTemp) / (weeklyMaxTemp - weeklyMinTemp)) * 100;
+    const dailyMaxPosition = ((maxTemp - weeklyMinTemp) / (weeklyMaxTemp - weeklyMinTemp)) * 100;
+
+    // Populate the row with cells
+    row.innerHTML = `
+      <td>${formatWeekday(date)}</td>
+      <td><img src="https://openweathermap.org/img/wn/${iconCode}.png" alt="Weather Icon"></td>
+      <td>${minTemp.toFixed(1)}°</td>
+      <td class="d-none d-md-table-cell">
+        <div class="temp-range-bar">
+          <div class="daily-range-bar" style="left: ${dailyMinPosition}%; right: ${100 - dailyMaxPosition}%;"></div>
+        </div>
+      </td>
+      <td>${maxTemp.toFixed(1)}°</td>
+    `;
+
+    // Append the row to the daily forecast table
+    dailyForecastTable.appendChild(row);
+  }
 }
 
 // Display hourly forecast data
@@ -136,13 +217,13 @@ function displayHourlyForecastData(forecastList) {
         const iconElement = document.createElement("img");
         iconElement.className = "weather-icon";
         const iconCode = forecast.weather[0].icon;
-        const iconUrl = `https://openweathermap.org/img/w/${iconCode}.png`;
+        const iconUrl = `https://openweathermap.org/img/wn/${iconCode}.png`;
         iconElement.setAttribute("src", iconUrl);
 
         const tempElement = document.createElement("div");
         tempElement.className = "temperature";
         const temperature = forecast.main.temp.toFixed(1);
-        tempElement.textContent = `${temperature} °${getUnitSymbol()}`;
+        tempElement.textContent = `${temperature}°`;
 
         col.appendChild(hourElement);
         col.appendChild(iconElement);
@@ -154,17 +235,21 @@ function displayHourlyForecastData(forecastList) {
 
 // Get daily forecast data
 function getDailyForecast(forecastList) {
-    const dailyForecast = [];
-    let currentDate = "";
+    const dailyForecast = {};
 
     forecastList.forEach((forecast) => {
         const date = new Date(forecast.dt * 1000);
         const dateString = formatDate(date);
 
-        if (dateString !== currentDate) {
-            currentDate = dateString;
-            dailyForecast.push(forecast);
+        if (!dailyForecast[dateString]) {
+            dailyForecast[dateString] = {
+                date: date,
+                temps: [],
+                icon: forecast.weather[0].icon,
+            };
         }
+
+        dailyForecast[dateString].temps.push(forecast.main.temp);
     });
 
     return dailyForecast;
@@ -204,14 +289,15 @@ function getUnitSymbol() {
 
 // Event listener for search form submission
 searchForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const city = cityInput.value.trim();
-    const units = document.querySelector('input[name="units"]:checked').value;
-    if (city !== "") {
-        fetchWeatherData(city, units);
-        cityInput.value = "";
-    }
+  event.preventDefault();
+  const city = searchInput.value.trim();
+  const units = document.querySelector('input[name="units"]:checked').value;
+  if (city !== "") {
+    fetchWeatherData(city, units);
+    searchInput.value = "";
+  }
 });
+
 
 // Event listener for unit change
 unitRadios.forEach((radio) => {
@@ -231,3 +317,123 @@ document.addEventListener("DOMContentLoaded", () => {
     const units = document.querySelector('input[name="units"]:checked').value;
     fetchWeatherByLocation(units);
 });
+
+// Function to fetch a list of cities
+function fetchCities(query) {
+    const apiUrl = `https://api.openweathermap.org/data/2.5/find?q=${query}&appid=${API_KEY}`;
+
+    return fetch(apiUrl)
+        .then((response) => response.json())
+        .then((data) => {
+            const cities = data.list.map((city) => city.name);
+            return cities;
+        })
+        .catch((error) => {
+            console.log("Error fetching cities:", error);
+            return [];
+        });
+}
+
+$(document).ready(function () {
+  $("#city-input").autocomplete({
+    source: function (request, response) {
+      fetchCities(request.term)
+        .then((cities) => response(cities))
+        .catch((error) => console.log("Error:", error));
+    },
+    minLength: 3, // Minimum number of characters to start searching
+    delay: 300, // Delay in milliseconds before triggering the search
+  });
+});
+
+// Autocomplete functionality
+$(function() {
+    $.getJSON("city.list.json", function(cityList) {
+        $("#city-input")
+            .autocomplete({
+                source: function(request, response) {
+                    if (request.term.length < 3) {
+                        return;
+                    }
+                    const matcher = new RegExp(
+                        $.ui.autocomplete.escapeRegex(request.term),
+                        "i"
+                    );
+                    response(
+                        $.grep(cityList, function(city) {
+                            return matcher.test(city.name);
+                        })
+                    );
+                },
+                select: function(event, ui) {
+                    $("#city-input").val(ui.item.name);
+                    fetchWeatherData(ui.item.name, getSelectedUnit());
+                    return false;
+                },
+            })
+            .autocomplete("instance")._renderItem = function(ul, item) {
+                return $("<li>")
+                    .append("<div>" + item.name + ", " + item.country + "</div>")
+                    .appendTo(ul);
+            };
+    });
+});
+
+// Helper function to get the selected unit
+function getSelectedUnit() {
+    const selectedUnit = document.querySelector('input[name="units"]:checked');
+    return selectedUnit ? selectedUnit.value : "metric";
+}
+
+
+// Fetch air quality data from API
+function fetchAirQualityData(lat, lon) {
+    const apiUrl = `http://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`;
+    fetch(apiUrl)
+        .then((response) => response.json())
+        .then((data) => {
+            displayAirQualityData(data);
+        })
+        .catch((error) => {
+            console.log("Error:", error);
+            alert("Failed to fetch air quality data. Please try again.");
+        });
+}
+
+// Display air quality data
+function displayAirQualityData(data) {
+    const airQuality = data.list[0];
+    const aqi = airQuality.main.aqi;
+
+    const aqiName = getAQIName(aqi);
+    document.getElementById("aqi-name").textContent = aqiName;
+
+    // Position the indicator
+    const indicator = document.getElementById("aqi-indicator");
+    const position = ((aqi - 1) / 4) * 100; // AQI ranges from 1 to 5
+    indicator.style.left = `${position}%`;
+}
+
+// Get AQI qualitative name
+function getAQIName(aqi) {
+    switch (aqi) {
+        case 1: return "Good";
+        case 2: return "Fair";
+        case 3: return "Moderate";
+        case 4: return "Poor";
+        case 5: return "Very Poor";
+        default: return "Unknown";
+    }
+}
+
+// Get AQI qualitative name
+function getAQIName(aqi) {
+    switch (aqi) {
+        case 1: return "Good";
+        case 2: return "Fair";
+        case 3: return "Moderate";
+        case 4: return "Poor";
+        case 5: return "Very Poor";
+        default: return "Unknown";
+    }
+}
