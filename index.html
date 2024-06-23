@@ -41,7 +41,6 @@
         <div id="weather-info">
             <span id="city"></span>
             <span id="temp"></span>
-            <img id="icon" src="" alt="Weather Icon">
             <p id="description"></p>
         </div>
         <div class="mt-4" id="hourly-forecast">
@@ -65,11 +64,24 @@
                             <div id="aqi-indicator"></div>
                         </div>
                     </div>
-                    <div id="feels-like-info" class="weather-widget mt-3">
-                        <h2>FEELS LIKE</h2>
-                        <div id="feels-like-content">
-                            <p><span id="feels-like-temp"></span></p>
-                            <p id="feels-like-description"></p>
+                    <div class="row">
+                        <div class="col-6">
+                            <div id="feels-like-info" class="weather-widget">
+                                <h2>FEELS LIKE</h2>
+                                <div id="feels-like-content">
+                                    <p><span id="feels-like-temp"></span></p>
+                                    <p id="feels-like-description"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div id="rain-forecast-info" class="weather-widget">
+                                <h2>RAIN FORECAST</h2>
+                                <div id="rain-forecast-content">
+                                    <p id="next-rain-time"></p>
+                                    <p id="rain-intensity"></p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

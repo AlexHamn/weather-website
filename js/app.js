@@ -68,14 +68,11 @@ function displayWeatherData(data) {
     const cityName = data.name;
     const temperature = data.main.temp;
     const description = data.weather[0].description;
-    const iconCode = data.weather[0].icon;
-    const iconUrl = `https://openweathermap.org/img/wn/${iconCode}.png`;
     const feelsLike = data.main.feels_like;
 
     document.getElementById("city").textContent = cityName;
     document.getElementById("temp").textContent = temperature.toFixed(1)+"°";
     document.getElementById("description").textContent = description;
-    document.getElementById("icon").setAttribute("src", iconUrl);
 
     document.getElementById("feels-like-temp").textContent = `${feelsLike.toFixed(1)}°`;
     document.getElementById("feels-like-description").textContent = getFeelsLikeDescription(temperature, feelsLike);
@@ -101,12 +98,14 @@ function fetchForecastData(lat, lon, units) {
     .then((data) => {
       displayDailyForecastData(data.list);
       displayHourlyForecastData(data.list, data.city.sunrise, data.city.sunset);
+      displayRainForecast(data.list);
     })
     .catch((error) => {
       console.log("Error:", error);
       alert("Failed to fetch forecast data. Please try again.");
     });
 }
+
 
 
 // Function to format date as three-letter weekday abbreviation or "Today" if it is the current date
@@ -151,17 +150,6 @@ function displayDailyForecastData(forecastList) {
 
   // Clear the existing content in the daily forecast table
   dailyForecastTable.innerHTML = "";
-
-  // Create table header
-  const headerRow = document.createElement("tr");
-  headerRow.innerHTML = `
-    <th>Date</th>
-    <th>Icon</th>
-    <th>Min</th>
-    <th class="d-none d-md-table-cell">Range</th>
-    <th>Max</th>
-  `;
-  dailyForecastTable.appendChild(headerRow);
 
   // Iterate over each date in the daily forecast
   for (const dateString in dailyForecast) {
@@ -512,5 +500,84 @@ function getAQIName(aqi) {
         case 4: return "Poor";
         case 5: return "Very Poor";
         default: return "Unknown";
+    }
+}
+
+// Function to display rain forecast
+function displayRainForecast(forecastList) {
+  const nextRain = getNextRainForecast(forecastList);
+  const nextRainTimeElement = document.getElementById("next-rain-time");
+  const rainIntensityElement = document.getElementById("rain-intensity");
+
+  if (nextRain) {
+    const rainTime = new Date(nextRain.dt * 1000);
+    const formattedRainTime = formatNextRainTime(rainTime);
+    nextRainTimeElement.textContent = formattedRainTime;
+    rainIntensityElement.textContent = `${getRainIntensity(
+      nextRain.rain["3h"]
+    )}`;
+  } else {
+    nextRainTimeElement.textContent = "No rain expected";
+    rainIntensityElement.textContent = "in the next 5 days";
+  }
+}
+
+// Helper function to get the next rain forecast
+function getNextRainForecast(forecastList) {
+  const now = new Date();
+  return forecastList.find((forecast) => {
+    const forecastTime = new Date(forecast.dt * 1000);
+    return forecastTime > now && forecast.rain && forecast.rain["3h"] > 0;
+  });
+}
+// Helper function to get time until rain
+function getTimeUntilRain(rainTime) {
+    const now = new Date();
+    const diffMs = rainTime - now;
+    const diffHrs = Math.floor(diffMs / 3600000);
+    const diffMins = Math.round((diffMs % 3600000) / 60000);
+
+    if (diffHrs > 0) {
+        return `${diffHrs}h ${diffMins}m`;
+    } else {
+        return `${diffMins}m`;
+    }
+}
+
+// Helper function to determine rain intensity
+function getRainIntensity(rainAmount) {
+    if (rainAmount < 2.5) {
+        return "Light rain";
+    } else if (rainAmount < 7.6) {
+        return "Moderate rain";
+    } else {
+        return "Heavy rain";
+    }
+}
+
+// Helper function to format the next rain time
+function formatNextRainTime(rainTime) {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    const dayAfterTomorrow = new Date(tomorrow);
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+
+    if (rainTime < tomorrow) {
+        // Rain is today
+        const hours = rainTime.getHours().toString().padStart(2, '0');
+        const minutes = rainTime.getMinutes().toString().padStart(2, '0');
+        return `Rain at ${hours}:${minutes}`;
+    } else if (rainTime < dayAfterTomorrow) {
+        // Rain is tomorrow
+        const hours = rainTime.getHours();
+        return `Rain tomorrow around ${hours}:00`;
+    } else {
+        // Rain is after tomorrow
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayName = daysOfWeek[rainTime.getDay()];
+        return `Next rain on ${dayName}`;
     }
 }

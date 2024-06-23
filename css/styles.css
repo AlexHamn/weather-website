@@ -15,13 +15,16 @@ body {
 }
 
 h2 {
-  font-size:smaller;
+    font-size: smaller;
 }
 
-#hourly-forecast {
+#hourly-forecast,
+#weather-info,
+#air-quality-info,
+#feels-like-info,
+#rain-forecast-info {
     margin-bottom: 20px;
     padding: 20px;
-    background-color: #dde9ff;
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     font-weight: 400;
@@ -32,12 +35,7 @@ h2 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 20px;
-    padding: 20px;
     background-color: #f9f9f9;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    font-weight:400;
 }
 
 #weather-info #temp {
@@ -194,67 +192,24 @@ h2 {
 }
 
 @media (min-width: 950px) {
-  #searchbar {
-    display: none;
-  }
+    #searchbar {
+        display: none;
+    }
 }
 
-#air-quality-info {
+#air-quality-info,
+#feels-like-info,
+#rain-forecast-info {
     padding: 15px;
-    background-color: #f8f9fa;
     border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-#aqi-bar-container {
-    position: relative;
-    width: 100%;
-    height: 10px;
-    background: linear-gradient(to right, lightblue, green, yellow, orange, red, darkred);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-top: 10px;
-}
-
-#aqi-bar {
-    width: 100%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     height: 100%;
-}
-
-#aqi-indicator {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    width: 16px;
-    height: 16px;
-    background-color: white;
-    border: 2px transparent;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-}
-
-#aqi-name {
-    font-weight: bold;
-    font-size: larger;
-}
-
-.container-fluid {
-    padding-left: 30px;
-    padding-right: 30px;
-}
-
-#feels-like-info {
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    aspect-ratio: 1 / 1;
     display: flex;
     flex-direction: column;
-    width: 50%;
 }
 
-#feels-like-content {
+#feels-like-content,
+#rain-forecast-content {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -263,44 +218,16 @@ h2 {
     text-align: center;
 }
 
-#feels-like-temp {
-    font-size: 2rem;
+#feels-like-temp,
+#next-rain-time {
+    font-size: 1.2rem;
     font-weight: bold;
 }
 
-#feels-like-description {
-    font-size: 1rem;
-    margin-top: 10px;
-}
-
-.weather-widget {
-    padding: 15px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-#air-quality-info {
-    border-bottom: 1px solid #e9ecef;
-}
-
-#feels-like-content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
-
-#feels-like-temp {
-    font-size: 2rem;
-    font-weight: bold;
-}
-
-#feels-like-description {
-    font-size: 1rem;
-    margin-top: 10px;
+#feels-like-description,
+#rain-intensity {
+    font-size: 0.9rem;
+    margin-top: 5px;
 }
 
 #aqi-bar-container {
@@ -343,4 +270,19 @@ h2 {
 .sun-icon {
     font-size: 24px;
     margin: 5px 0;
+}
+
+#weather-details .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+#weather-details .col-6 {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.container-fluid {
+    padding-left: 30px;
+    padding-right: 30px;
 }
